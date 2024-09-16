@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+	rel="stylesheet"
+	integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+	crossorigin="anonymous">
+<title>REST API</title>
+</head>
+<style>html{margin: 2%;}</style>
+<body>
+
+	<h2 id="titulo">Cadastro de Usuários</h2>
+	
+	<form action="" id="formCadastroUsuario">
+		<div class="mb-3">
+			<label for="id" class="form-label">ID</label> <input type="text" class="form-control" id="id" readonly="readonly">
+		</div>
+		<div class="mb-3">
+			<label for="nome" class="form-label">Nome Completo</label> 
+			<input type="text" class="form-control" id="nome" placeholder="Insira seu nome completo">
+		</div>
+
+		<div class="mb-3">
+			<label for="idade" class="form-label">Idade</label> 
+			<input type="number" class="form-control" id="idade" placeholder="Insira sua idade">
+		</div>
+	</form>
+		<button type="button" class="btn btn-primary" onclick="salvarUsuario()">Salvar</button>
+
+		<button type="button" class="btn btn-secondary"	onclick="document.getElementById('formCadastroUsuario').reset();">Novo</button>
+
+		<button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#modalPesquisaUser">Pesquisar</button>
+		
+		<button type="button" class="btn btn-danger" onclick="deletarUsuario()">Excluir</button>
+
+	<div class="modal fade" id="modalPesquisaUser" tabindex="-1"
+		aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="exampleModalLabel">Pesquisa de	Usuário</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<form>
+						<div class="mb-3">
+							<label for="recipient-name" class="col-form-label">Informe	o nome:</label> 
+							<input type="text" class="form-control" id="buscarUsuario">
+						</div>
+						<button type="button" class="btn btn-primary" onclick="pesquisarUsuario()">Buscar</button>
+					</form>
+					  <div style="height:300px; overflow:scroll;">
+						<table class="table" id="tabelaResultados">
+							<thead>
+								<tr>
+									<th scope="col">ID</th>
+									<th scope="col">Nome</th>
+									<th scope="col">Editar</th>
+									<th scope="col">Apagar</th>
+								</tr>
+							</thead>
+							<tbody>
+	
+							</tbody>
+						</table>
+					  </div>	
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary"	data-bs-dismiss="modal">Fechar</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js"	
+		integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+		crossorigin="anonymous">
+		
+	</script>
+
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+		integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+		crossorigin="anonymous">
+		
+	</script>
+
+	<script type="text/javascript">
+	
+		function deletarUsuario(){
+			var id = $('#id').val();
+			if(id != 'null' && id.trim() != '') {
+				excluirUsuario(id);
+				document.getElementById('formCadastroUsuario').reset();
+			}	
+		}
+	
+		function excluirUsuario(id) {
+			if(confirm("Deseja realmente excluir o usuário?")) {
+				$.ajax({
+					method : "DELETE",
+					url : "apagar",
+					data : "idUser=" + id,
+					
+					success : function(response) {
+						$('#'+ id).remove();
+						alert(response);
+						
+					}
+				}).fail(function(xhr, status, errorThrown) {
+					alert("Erro ao excluir usuário: " + xhr.responseText);
+				});
+			}
+		}
+	
+		function pesquisarUsuario() {
+			var nome = $('#buscarUsuario').val(); 
+			
+			if(nome != null && nome.trim() != '') {
+				$.ajax({
+					method : "GET",
+					url : "buscarPorNome",
+					data : "name=" + nome,
+					
+					success : function(response) {
+						$('#tabelaResultados > tbody > tr').remove();
+						
+						for(var i = 0; i < response.length; i++) {
+							$('#tabelaResultados > tbody').append('<tr id='+response[i].id+'><td>'+response[i].id+'</td><td>'+response[i].nome+'</td><td><button type="button" class="btn btn-success" onclick="enviarParaTela('+response[i].id+')">Visualizar</button></td><td><button type="button" class="btn btn-danger" onclick="excluirUsuario('+response[i].id+')">Excluir</button></td></tr>');
+							
+						}
+					}
+				}).fail(function(xhr, status, errorThrown) {
+					alert("Erro ao buscar usuário: " + xhr.responseText);
+				});
+			}
+				
+		}
+		
+		function enviarParaTela(id) {
+			$.ajax({
+				method : "GET",
+				url : "buscarusuario",
+				data : "idUser=" + id,
+				
+				success : function(response) {
+					$('#tabelaResultados > tbody > tr').remove();
+					$("#id").val(response.id);
+					$("#nome").val(response.nome);
+					$("#idade").val(response.idade);
+					
+					$("#modalPesquisaUser").modal('hide');
+				}
+			}).fail(function(xhr, status, errorThrown) {
+				alert("Erro ao enviar usuário para a tela principal: " + xhr.responseText);
+			});
+		}
+	
+		function salvarUsuario() {
+			var id = $("#id").val();
+			var nome = $("#nome").val();
+			var idade = $("#idade").val();
+			
+			if(nome == 'null' || nome != 'null' && nome.trim() == '') {
+				$('#nome').focus();
+				alert('Informe o nome');
+				return;
+			}
+			
+			if(idade == 'null' || idade != 'null' && idade.trim() == '') {
+				$('#idade').focus();
+				alert("Informe a idade");
+				return;
+			}
+
+			$.ajax({
+				method : "POST",
+				url : "salvar",
+				data : JSON.stringify({
+					id : id,
+					nome : nome,
+					idade : idade
+				}),
+				contentType : "application/json; charset=utf-8",
+				success : function(response) {
+					$("#id").val(response.id);
+					alert("Dados salvos com sucesso!");
+				}
+			}).fail(function(xhr, status, errorThrown) {
+				alert("Erro ao salvar o arquivo: " + xhr.responseText);
+			});
+		}
+	</script>
+</body>
+
+</html>
